@@ -1,0 +1,19 @@
+{
+  "name": "shef-scrapper",
+  "version": "1.0.0",
+  "description": "shef.com menu scrapper script",
+  "main": "index.js",
+  "repository": "git@github.com:robor-systems/shef-scrapper.git",
+  "author": "Ahmed Tanvir <mahmedexec@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "exceljs": "^4.3.0",
+    "nodemon": "^2.0.19",
+    "puppeteer": "^15.5.0"
+  }
+}
