@@ -84,7 +84,9 @@ worksheet.columns = [
   await workbook.xlsx.writeFile("dishes.xlsx");
   console.log("Excel file written");
 
-  if (process.argv[2] !== "--no-images") {
+  if (process.argv?.[2] === "--no-images")
+    console.log("Skipping Image Download");
+  else {
     for (let dish of dishes) {
       await download(dish.imageUrl, `images/${dish.name}.jpg`);
     }
