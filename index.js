@@ -20,6 +20,7 @@ worksheet.columns = [
 ];
 
 (async () => {
+  console.log(process.argv);
   const { SHEF_EMAIL, SHEF_PASSWORD } = process.env;
   const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
@@ -83,10 +84,12 @@ worksheet.columns = [
   await workbook.xlsx.writeFile("dishes.xlsx");
   console.log("Excel file written");
 
-  for (let dish of dishes) {
-    await download(dish.imageUrl, `images/${dish.name}.jpg`);
+  if (process.argv[2] !== "--no-images") {
+    for (let dish of dishes) {
+      await download(dish.imageUrl, `images/${dish.name}.jpg`);
+    }
+    console.log("Images saved");
   }
-  console.log("Images saved");
 
   await browser.close();
 })();
