@@ -22,7 +22,7 @@ worksheet.columns = [
 (async () => {
   console.log(process.argv);
   const { SHEF_EMAIL, SHEF_PASSWORD } = process.env;
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(0);
 
@@ -35,17 +35,20 @@ worksheet.columns = [
   await page.waitForNavigation();
 
   await page.goto("https://shef.com/shef/food-items/134415/");
-  await page.waitForTimeout(2000);
 
+  await page.waitForSelector('[data-cy="snooze-add-address-button"]');
   await page.click('[data-cy="snooze-add-address-button"]');
-  await page.waitForTimeout(2000);
 
   const dishes = [];
+
+  let count = 0;
   page.on("response", async (response) => {
     if (
       response.url().includes("queries") &&
       response.headers()["content-type"] === "application/json; charset=UTF-8"
     ) {
+      console.log(count++);
+
       dishes.push(
         ...(await response.json()).results[0].hits
           .filter((dish) => !dishes.find((item) => item.name === dish.name))
@@ -58,23 +61,21 @@ worksheet.columns = [
       );
     }
   });
+  await page.waitForSelector("input");
 
   for (let i = 97; i <= 122; i++) {
     await page.click("input", { clickCount: 3 });
     await page.type("input", String.fromCharCode(i));
+    await page.waitForSelector(".sc-Fyfyc.gTCFHW.sc-VhGJa.DmPMx:last-child");
 
-    for (let j = 0; j <= 124; j++) {
-      try {
-        console.log(`Letter ${String.fromCharCode(i)}, Page ${j}`);
-
-        console.log('Clicking "Next"');
-
-        await page.click(".sc-Fyfyc.gTCFHW.sc-VhGJa.DmPMx:last-child");
-      } catch (e) {
+    while (true) {
+      if (await page.$(".sc-Fyfyc.kAGesh.sc-VhGJa.iUxsCj:last-child[disabled]"))
         break;
-      }
+      else await page.click(".sc-Fyfyc.gTCFHW.sc-VhGJa.DmPMx:last-child");
+      await page.waitForResponse((response) =>
+        response.url().includes("queries")
+      );
     }
-    await page.waitForTimeout(1000);
   }
 
   console.log("Data Scraping Complete, Now Writing to Excel");
