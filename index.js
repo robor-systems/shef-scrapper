@@ -22,7 +22,7 @@ worksheet.columns = [
 (async () => {
   console.log(process.argv);
   const { SHEF_EMAIL, SHEF_PASSWORD } = process.env;
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(0);
 
@@ -70,6 +70,7 @@ worksheet.columns = [
         console.log('Clicking "Next"');
 
         await page.click(".sc-Fyfyc.gTCFHW.sc-VhGJa.DmPMx:last-child");
+        await page.waitForTimeout(100)
       } catch (e) {
         break;
       }
