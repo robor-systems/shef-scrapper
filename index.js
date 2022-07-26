@@ -4,22 +4,56 @@ const https = require("https");
 
 require("dotenv").config();
 const ExcelJS = require("exceljs");
+const { exit } = require("process");
 
 const workbook = new ExcelJS.Workbook();
+// const worksheet = workbook.addWorksheet("New Sheet", {
+//   properties: {
+//     defaultColWidth: 30,
+//   },
+// });
+// worksheet.columns = [
+//   { header: "Name", key: "name" },
+//   { header: "Description", key: "description" },
+//   { header: "Ingredients", key: "ingredients" },
+//   { header: "Image URL", key: "imageUrl" },
+// ];
+async function downloadImages() {
+  console.log("loading file");
+  const dishContent = [];
+  await workbook.xlsx.readFile("dishes_final.xlsx").then(async () => {
+    console.log("getting worksheet");
+    let worksheet = workbook.getWorksheet("New Sheet");
+    try {
+      // let count = 0;
+      worksheet.eachRow((row, rowNum) => {
+        dishContent.push(row.values);
+      });
 
-const worksheet = workbook.addWorksheet("New Sheet", {
-  properties: {
-    defaultColWidth: 30,
-  },
-});
-worksheet.columns = [
-  { header: "Name", key: "name" },
-  { header: "Description", key: "description" },
-  { header: "Ingredients", key: "ingredients" },
-  { header: "Image URL", key: "imageUrl" },
-];
+      console.log("ALL done, lenght: " + dishContent.length);
+
+      for (let index = 2; index < dishContent.length; index++) {
+        const element = dishContent[index];
+
+        let name = element[1];
+        name = name.replace(/\s/g, "_");
+        let url = element[element.length - 1];
+        console.log(name, url);
+
+        await download(url, `images/${name}.jpg`);
+        if (index == 10) break;
+      }
+    } catch (error) {
+      console.log("ERROR: " + error);
+    }
+  });
+}
 
 (async () => {
+  if (process.argv?.[2] === "--images") {
+    await downloadImages();
+    exit();
+  }
   console.log(process.argv);
   const { SHEF_EMAIL, SHEF_PASSWORD } = process.env;
   const browser = await puppeteer.launch({ headless: false });
@@ -136,18 +170,21 @@ worksheet.columns = [
 const download = async (url, destination) =>
   new Promise((resolve, reject) => {
     const file = fs.createWriteStream(destination);
+    try {
+      https
+        .get(url, (response) => {
+          response.pipe(file);
 
-    https
-      .get(url, (response) => {
-        response.pipe(file);
+          file.on("finish", () => {
+            file.close(resolve(true));
+          });
+        })
+        .on("error", (error) => {
+          fs.unlink(destination);
 
-        file.on("finish", () => {
-          file.close(resolve(true));
+          reject(error.message);
         });
-      })
-      .on("error", (error) => {
-        fs.unlink(destination);
-
-        reject(error.message);
-      });
+    } catch (error) {
+      console.log(error);
+    }
   });
