@@ -24,6 +24,7 @@ worksheet.columns = [
   const { SHEF_EMAIL, SHEF_PASSWORD } = process.env;
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
+  page.setViewport({ width: 1380, height: 1000 });
   page.setDefaultNavigationTimeout(0);
 
   await page.goto("https://shef.com/shef/food-items/134415/");
@@ -41,11 +42,13 @@ worksheet.columns = [
   await page.waitForTimeout(2000);
 
   const dishes = [];
+
   page.on("response", async (response) => {
     if (
       response.url().includes("queries") &&
       response.headers()["content-type"] === "application/json; charset=UTF-8"
     ) {
+      console.log("adding data");
       dishes.push(
         ...(await response.json()).results[0].hits
           .filter((dish) => !dishes.find((item) => item.name === dish.name))
@@ -59,23 +62,55 @@ worksheet.columns = [
     }
   });
 
+  // await page.click("input", { clickCount: 3 });
+  // await page.type("input", "A");
+
+  // try {
+  //   console.log(`Letter A, Page 1`);
+
+  //   for (let index = 0; index < 125; index++) {
+  //     console.log('Clicking "Next"');
+  //     let elemExists = await page.$(
+  //       "div.sc-gkZcHc.hAJCcO>button:last-child[disabled]"
+  //     );
+  //     console.log(elemExists);
+  //     if (elemExists) {
+  //       console.log("Breaking");
+  //       break;
+  //     }
+
+  //     await page.click("div.sc-gkZcHc.hAJCcO>button:last-child");
+  //     await page.waitForTimeout(200);
+  //   }
+  // } catch (e) {
+  //   console.log("ERROR: ", e);
+  // }
+
   for (let i = 97; i <= 122; i++) {
     await page.click("input", { clickCount: 3 });
     await page.type("input", String.fromCharCode(i));
 
-    for (let j = 0; j <= 124; j++) {
+    for (let j = 0; j <= 125; j++) {
       try {
         console.log(`Letter ${String.fromCharCode(i)}, Page ${j}`);
-
         console.log('Clicking "Next"');
 
-        await page.click(".sc-Fyfyc.gTCFHW.sc-VhGJa.DmPMx:last-child");
-        await page.waitForTimeout(100)
+        let elemExists = await page.$(
+          "div.sc-gkZcHc.hAJCcO>button:last-child[disabled]"
+        );
+        if (elemExists) {
+          console.log("Breaking");
+          break;
+        }
+
+        await page.click("div.sc-gkZcHc.hAJCcO>button:last-child");
+        await page.waitForTimeout(200);
       } catch (e) {
+        console.log("ERROR: ", e);
         break;
       }
     }
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
   }
 
   console.log("Data Scraping Complete, Now Writing to Excel");
@@ -94,7 +129,8 @@ worksheet.columns = [
     console.log("Images saved");
   }
 
-  await browser.close();
+  console.log("Exiting");
+  // await browser.close();
 })();
 
 const download = async (url, destination) =>
